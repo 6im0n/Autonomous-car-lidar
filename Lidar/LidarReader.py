@@ -45,15 +45,23 @@ class data:
 
 def RefineValue():
     valuetodelete = len(data.angle_distance_tab.values()) - 32
-    lastValue = -999.9
+    lastDistance = 0
     for angle, distance in data.angle_distance_tab.items():
-        if (lastValue - distance < 0.1 or lastValue - distance > -0.1) and valuetodelete > 0:
-            valuetodelete -= 1
-        else :
+        if angle < 243.9 or  angle > 296.0:
+            data.distance_tab.append(distance)
             print("Angle: %f" % angle)
             print("Distance: %f" % distance)
+            lastDistance = distance
+            continue
+        if valuetodelete > 0 and (abs(distance - lastDistance) < 0.13):
+            valuetodelete -= 1
+        else :
             data.distance_tab.append(distance)
-            lastValue = distance
+            print("Angle: %f" % angle)
+            print("Distance: %f" % distance)
+            lastDistance = distance
+
+    print (len(data.distance_tab))
     if len(data.distance_tab) < 32:
         data.distance_tab.clear()
 
@@ -95,7 +103,7 @@ def LiDARFrameProcessing(frame: Delta2GFrame):
                 scanSamplesSignalQuality.append(signalQuality)
                 scanSamplesRange.append(distance * RANGE_SCALE)
                 angle = (startAngle) + (i * ((360.0 / SCAN_STEPS) / sampleCnt))
-                if 240.0 < angle < 300.9:
+                if 239.8 < angle < 300.9:
                     data.angle_distance_tab[angle] = distance * RANGE_SCALE
                     #print("---------Angle: %f" % angle)
                     #print("Distance: %f" % (distance * RANGE_SCALE))
@@ -104,9 +112,9 @@ def LiDARFrameProcessing(frame: Delta2GFrame):
 
             if frameIndex == (SCAN_STEPS - 1):
                 print("Scan Completed")
-                print(data.angle_distance_tab)
+                #print(data.angle_distance_tab)
                 RefineValue()
-                #print(data.distance_tab)
+                print(data.distance_tab)
                 #print(len(data.distance_tab))
                 data.angle_distance_tab.clear()
                 data.distance_tab.clear()
