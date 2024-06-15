@@ -17,7 +17,22 @@ repalce the the receiver in the car, impossible beacause the 2 in one receiver d
 
 ## Third solution:
 
-to replace the the usage of pentotimeter elelectronicly, technicaly is possible but how ?
+to replace the the usage of pentotimeter elelectronicly, technicaly is possible but how ? 
+by replace the current potetiometer by a digital one, and control it by the arduino.
+
+#### current potentionemeter 5kOhm:
+https://www.elektroda.com/rtvforum/topic3377367.html
+
+digital potentiometer:
+X9C103S this is a 10kOhm digital potentiometer and nonvolatile memory to store the state og the current value
+this potentiometer is not controled by a spi interface but by a simple increment and decrement signal.
+so the probleme we can't jump to one value to other value directly, we need to go through all the value betwen the current value and the target value.
+(the time betwen two value is 1 micro-second)
+https://www.youtube.com/watch?v=lGk_HVKXYWA
+kl
+#### how to control a digital potentiometer from a arduino:
+- https://www.youtube.com/watch?v=zQ5_NPeBfHM
+- https://www.hackster.io/umpheki/arduino-and-mcp4131-digitally-controlled-potentiometer-dcp-d35997
 
 
 ## Final step of the selection of the solution:
