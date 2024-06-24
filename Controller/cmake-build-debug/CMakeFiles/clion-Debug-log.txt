@@ -1,0 +1,6 @@
+/home/peralban/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/home/peralban/.local/share/JetBrains/Toolbox/apps/clion/bin/ninja/linux/x64/ninja -G Ninja -S /home/peralban/epitech/HUB -B /home/peralban/epitech/HUB/cmake-build-debug
+CMake Error at CMakeLists.txt:18 (generate_arduino_firmware):
+  Unknown CMake command "generate_arduino_firmware".
+
+
+-- Configuring incomplete, errors occurred!
