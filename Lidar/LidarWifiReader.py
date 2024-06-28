@@ -1,23 +1,20 @@
 from socket import timeout
 import serial
 import time
-import threading
-import sys
-import signal
-
-import socket
-
-TCP_IP = '192.168.4.1'  # IP address of the ESP32 server
-TCP_PORT = 4242
 
 #Serial port variables
 #Permission problems under Linus use: sudo chmod 666 /dev/ttyUSB0
-"""
 SERIAL_PORT_WIN = "COM3"
-SERIAL_PORT_LINUX = '/dev/ttyACM0'
+SERIAL_PORT_LINUX = '/dev/rfcomm0'
 SERIAL_PORT = SERIAL_PORT_LINUX
 SERIAL_BAUDRATE = 115200
-"""
+
+import socket  # Import the socket module
+
+# TCP connection variables
+TCP_IP = '192.168.4.1'  # IP address of the ESP32 server
+TCP_PORT = 4242
+
 #Scan variables
 scanSamplesSignalQuality = [0.0]
 scanSamplesRange = [0.0]
@@ -32,9 +29,8 @@ SCAN_STEPS = 16  #How many steps/frames each full 360deg scan is composed of
 #Received value scaling
 ROTATION_SPEED_SCALE = 0.05 * 60  #Convert received value to RPM (LSB: 0.05 rps)
 ANGLE_SCALE = 0.01  #Convert received value to degrees (LSB: 0.01 degrees)
-#RANGE_SCALE = 0.25 * 0.001  #Convert received value to meters (LSB: 0.25 mm)
-RANGE_SCALE = 0.25 * 1  #Convert received value to millimeters (LSB: 0.25 mm)
-PRINTABLE = False
+RANGE_SCALE = 0.25 * 0.001  #Convert received value to meters (LSB: 0.25 mm)
+
 
 #Delta-2G frame structure
 class Delta2GFrame:
@@ -59,26 +55,24 @@ def RefineValue():
     for angle, distance in data.angle_distance_tab.items():
         if angle < 243.9 or  angle > 296.0:
             data.distance_tab.append(distance)
-            #print("Angle: %f" % angle)
-            #print("Distance: %f" % distance)
+            print("Angle: %f" % angle)
+            print("Distance: %f" % distance)
             lastDistance = distance
             continue
         if valuetodelete > 0 and (abs(distance - lastDistance) < 0.13):
             valuetodelete -= 1
         else :
             data.distance_tab.append(distance)
-            #print("Angle: %f" % angle)
-            #print("Distance: %f" % distance)
+            print("Angle: %f" % angle)
+            print("Distance: %f" % distance)
             lastDistance = distance
 
-    #print (len(data.distance_tab))
+    print (len(data.distance_tab))
     if len(data.distance_tab) < 32:
         data.distance_tab.clear()
 
 
 def LiDARFrameProcessing(frame: Delta2GFrame):
-    print("Processing Frame")
-    global PRINTABLE
     match frame.commandWord:
         case 0xAE:
             #Device Health Information: Speed Failure
@@ -123,16 +117,10 @@ def LiDARFrameProcessing(frame: Delta2GFrame):
             # Angle 270 is the front of the LIDAR
 
             if frameIndex == (SCAN_STEPS - 1):
+                print("Scan Completed")
                 #print(data.angle_distance_tab)
-
-                print("1")
-                print("OK")
-                print("No errors so far")
                 RefineValue()
-                for i in range(len(data.distance_tab)):
-                    print(round(data.distance_tab[i], 1))
-                    print("datalen : %d" % len(data.distance_tab))
-                print("No further info")
+                print(data.distance_tab)
                 #print(len(data.distance_tab))
                 data.angle_distance_tab.clear()
                 data.distance_tab.clear()
@@ -143,19 +131,29 @@ def LiDARFrameProcessing(frame: Delta2GFrame):
         #		print("increment: %f" % angle_increment)
         #		print("Angle: %f" % angle)
 
-def LidarMangement():
+    # Port number of the ESP32 server
+def main():
     try:
+        # Setup TCP connection
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect((TCP_IP, TCP_PORT))
-    except serial.serialutil.SerialException:
-        print("ERROR: Serial Connection Error")
+    except socket.error as e:
+        print(f"ERROR: TCP Connection Error: {e}")
         return
 
     status = 0
     checksum = 0
     lidarFrame = Delta2GFrame()
     while True:
-        rx = client_socket.recv(100)  # Read data from TCP connection
+        try:
+            rx = client_socket.recv(100)  # Read data from TCP connection
+        except socket.timeout:
+            print("ERROR: TCP Read Timeout")
+            continue
+        except socket.error as e:
+            print(f"ERROR: TCP Read Error: {e}")
+            break
+
         for by in rx:
             match status:
                 case 0:
@@ -164,8 +162,8 @@ def LidarMangement():
                     if lidarFrame.frameHeader == FRAME_HEADER:
                         #Valid Header
                         status = 1
-                    #else:
-                        #print("ERROR: Frame Header Failed") don't print this error
+                    else:
+                        print("ERROR: Frame Header Failed")
                     #Reset checksum, new frame start
                     checksum = 0
                 case 1:
@@ -232,87 +230,6 @@ def LidarMangement():
             #Calculate current frame checksum, all bytes excluding the last 2, which are the checksum
             if status < 10:
                 checksum = (checksum + by) % 0xFFFF
-
-def start_simulation():
-    print("Simulation started")
-
-def stop_simulation():
-    print("Simulation stopped")
-
-def car_forward():
-    print("Car moving forward")
-
-def car_backwards():
-    print("Car moving backwards")
-
-def wheels_dir():
-    print("Car wheels direction")
-
-def get_info_lidar():
-    global PRINTABLE
-    PRINTABLE = True
-
-def get_current_speed():
-    print("Current speed")
-
-def get_current_wheels():
-    print("Current wheels")
-
-def cycle_wait():
-    print("Cycle wait")
-
-def get_car_speed_max():
-    print("Car speed max")
-
-def get_car_speed_min():
-    print("Car speed min")
-
-
-AI_REQUEST = [
-    ["START_SIMULATION", start_simulation],
-    ["STOP_SIMULATION", stop_simulation],
-    ["CAR_FORWARD", car_forward],
-    ["CAR_BACKWARDS", car_backwards],
-    ["WHEELS_DIR", wheels_dir],
-    ["GET_INFO_LIDAR", get_info_lidar],
-    ["GET_CURRENT_SPEED", get_current_speed],
-    ["GET_CURRENT_WHEELS", get_current_wheels],
-    ["CYCLE_WAIT", cycle_wait],
-    ["GET_CAR_SPEED_MAX", get_car_speed_max],
-    ["GET_CAR_SPEED_MIN", get_car_speed_min]
-]
-
-def signal_handler(sig, frame):
-    sys.exit(0)
-
-
-def main():
-    LidarMangement()
-"""
-def main():
-    signal.signal(signal.SIGINT, signal_handler)
-    #lidarThread = threading.Thread(target=LidarMangement)
-    #lidarThread.start()
-    global PRINTABLE
-    while True:
-        LidarMangement()
-        readline = input()
-        if readline == "exit":
-            break
-        print(readline)
-        if readline[len(readline) - 1] == '\n':
-            print("The command ends with a newline")
-        if any(readline == command[0] for command in AI_REQUEST):
-            for command in AI_REQUEST:
-                if readline == command[0]:
-                    command[1]()
-                    break
-        else:
-            print("The command is not recognized")
-        PRINTABLE = False
-    #lidarThread.join()
-"""
-
 
 if __name__ == "__main__":
     main()
