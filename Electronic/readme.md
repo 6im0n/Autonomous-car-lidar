@@ -48,6 +48,12 @@ https://deviationtx.com/forum/protocol-development/9024-question-xn297l-as-trans
 [...] link to be added soon
 
 
+## SPI interface
+https://en.wikipedia.org/wiki/Serial_Peripheral_Interface
+
+## two didigital potentiometer
+
+
 
 ## The protocol
 
