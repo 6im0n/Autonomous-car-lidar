@@ -53,6 +53,7 @@ class data:
     angle_distance_tab = {0.0: 0.0}
     distance_tab = [0.0]
 
+
 def do_action(data_map):
     last_key, last = list(data_map.items())[-1]
     first_key, first = list(data_map.items())[0]
@@ -61,43 +62,37 @@ def do_action(data_map):
     setup_angle = 0
     if middle < 100:
         setup_speed = 0.1
-    elif middle < 1000:
+    elif middle < 200:
         setup_speed = 0.3
-    elif middle < 2000:
+    elif middle < 300:
         setup_speed = 0.5
-    elif middle < 3000:
+    elif middle < 500:
         setup_speed = 0.7
-    elif middle < 4000:
+    elif middle < 600:
         setup_speed = 0.7
-    elif middle < 5000:
-        setup_speed = 1.0
+    elif middle < 10000:
+        setup_speed = 0.8
 
-    if first < 100:
+    if (middle >= 1500):
+        setup_angle = 0.00
+    elif (middle >= 700):
+        setup_angle = 0.05
+    elif (middle >= 600):
         setup_angle = 0.1
-    elif first < 1000:
+    elif (middle >= 400):
+        setup_angle = 0.2
+    elif (middle >= 200):
         setup_angle = 0.3
-    elif first < 2000:
-        setup_angle = 0.5
-    elif first < 3000:
+    elif (middle < 200 and middle >= 50):
         setup_angle = 0.7
-    elif first < 4000:
-        setup_angle = 0.7
-    elif first < 5000:
-        setup_angle = 1.0
+    else:
+        setup_angle = 1
 
-    if last < 100:
-        setup_angle = -0.1
-    elif last < 1000:
-        setup_angle = -0.3
-    elif last < 2000:
-        setup_angle = -0.5
-    elif last < 3000:
-        setup_angle = -0.7
-    elif last < 4000:
-        setup_angle = -0.7
-    elif last < 5000:
-        setup_angle = -1.0
-
+    if (first - last) < 0:
+        signedangle = -1
+    else:
+        signedangle = 1
+    setup_angle *= signedangle
     send_dir = "WHEELS_DIR:" + str(setup_angle) + "\n"
     send_speed = "WHEELS_SPEED:" + str(setup_speed) + "\n"
     print(send_dir)
@@ -108,7 +103,7 @@ def RefineValue():
     valuetodelete = len(data.angle_distance_tab.values()) - 32
     lastDistance = 0
     for angle, distance in data.angle_distance_tab.items():
-        if angle < 243.9 or  angle > 296.0:
+        if angle < 153.9 or angle > 206.0:
             data.distance_tab.append(distance)
             #print("Angle: %f" % angle)
             #print("Distance: %f" % distance)
@@ -116,7 +111,7 @@ def RefineValue():
             continue
         if valuetodelete > 0 and (abs(distance - lastDistance) < 0.13):
             valuetodelete -= 1
-        else :
+        else:
             data.distance_tab.append(distance)
             #print("Angle: %f" % angle)
             #print("Distance: %f" % distance)
@@ -164,7 +159,7 @@ def LiDARFrameProcessing(frame: Delta2GFrame):
                 scanSamplesSignalQuality.append(signalQuality)
                 scanSamplesRange.append(distance * RANGE_SCALE)
                 angle = (startAngle) + (i * ((360.0 / SCAN_STEPS) / sampleCnt))
-                if 239.8 < angle < 300.9:
+                if 330.0 < angle < 360.0 or 0.0 < angle < 30.0:
                     data.angle_distance_tab[angle] = distance * RANGE_SCALE
                     #print("---------Angle: %f" % angle)
                     #print("Distance: %f" % (distance * RANGE_SCALE))
@@ -175,7 +170,7 @@ def LiDARFrameProcessing(frame: Delta2GFrame):
                 RefineValue()
                 #for i in range(len(data.distance_tab)):
                 #    print(round(data.distance_tab[i], 1))
-                    #print("datalen : %d" % len(data.distance_tab))
+                #print("datalen : %d" % len(data.distance_tab))
                 do_action(data.angle_distance_tab)
                 data.angle_distance_tab.clear()
                 data.distance_tab.clear()
@@ -187,6 +182,8 @@ def LiDARFrameProcessing(frame: Delta2GFrame):
         #		print("Angle: %f" % angle)
 
     # Port number of the ESP32 server
+
+
 def main():
     try:
         # Setup TCP connection
@@ -285,6 +282,7 @@ def main():
             #Calculate current frame checksum, all bytes excluding the last 2, which are the checksum
             if status < 10:
                 checksum = (checksum + by) % 0xFFFF
+
 
 if __name__ == "__main__":
     main()
