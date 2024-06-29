@@ -1,6 +1,9 @@
 from socket import timeout
 import serial
 import time
+import threading
+import sys
+import signal
 
 #Serial port variables
 #Permission problems under Linus use: sudo chmod 666 /dev/ttyUSB0
@@ -29,7 +32,9 @@ SCAN_STEPS = 16  #How many steps/frames each full 360deg scan is composed of
 #Received value scaling
 ROTATION_SPEED_SCALE = 0.05 * 60  #Convert received value to RPM (LSB: 0.05 rps)
 ANGLE_SCALE = 0.01  #Convert received value to degrees (LSB: 0.01 degrees)
-RANGE_SCALE = 0.25 * 0.001  #Convert received value to meters (LSB: 0.25 mm)
+#RANGE_SCALE = 0.25 * 0.001  #Convert received value to meters (LSB: 0.25 mm)
+RANGE_SCALE = 0.25 * 1  #Convert received value to millimeters (LSB: 0.25 mm)
+PRINTABLE = False
 
 
 #Delta-2G frame structure
@@ -48,6 +53,56 @@ class data:
     angle_distance_tab = {0.0: 0.0}
     distance_tab = [0.0]
 
+def do_action(data_map):
+    last_key, last = list(data_map.items())[-1]
+    first_key, first = list(data_map.items())[0]
+    middle_key, middle = list(data_map.items())[len(data_map) // 2]
+    setup_speed = 0
+    setup_angle = 0
+    if middle < 100:
+        setup_speed = 0.1
+    elif middle < 1000:
+        setup_speed = 0.3
+    elif middle < 2000:
+        setup_speed = 0.5
+    elif middle < 3000:
+        setup_speed = 0.7
+    elif middle < 4000:
+        setup_speed = 0.7
+    elif middle < 5000:
+        setup_speed = 1.0
+
+    if first < 100:
+        setup_angle = 0.1
+    elif first < 1000:
+        setup_angle = 0.3
+    elif first < 2000:
+        setup_angle = 0.5
+    elif first < 3000:
+        setup_angle = 0.7
+    elif first < 4000:
+        setup_angle = 0.7
+    elif first < 5000:
+        setup_angle = 1.0
+
+    if last < 100:
+        setup_angle = -0.1
+    elif last < 1000:
+        setup_angle = -0.3
+    elif last < 2000:
+        setup_angle = -0.5
+    elif last < 3000:
+        setup_angle = -0.7
+    elif last < 4000:
+        setup_angle = -0.7
+    elif last < 5000:
+        setup_angle = -1.0
+
+    send_dir = "WHEELS_DIR:" + str(setup_angle) + "\n"
+    send_speed = "WHEELS_SPEED:" + str(setup_speed) + "\n"
+    print(send_dir)
+    print(send_speed)
+
 
 def RefineValue():
     valuetodelete = len(data.angle_distance_tab.values()) - 32
@@ -55,19 +110,19 @@ def RefineValue():
     for angle, distance in data.angle_distance_tab.items():
         if angle < 243.9 or  angle > 296.0:
             data.distance_tab.append(distance)
-            print("Angle: %f" % angle)
-            print("Distance: %f" % distance)
+            #print("Angle: %f" % angle)
+            #print("Distance: %f" % distance)
             lastDistance = distance
             continue
         if valuetodelete > 0 and (abs(distance - lastDistance) < 0.13):
             valuetodelete -= 1
         else :
             data.distance_tab.append(distance)
-            print("Angle: %f" % angle)
-            print("Distance: %f" % distance)
+            #print("Angle: %f" % angle)
+            #print("Distance: %f" % distance)
             lastDistance = distance
 
-    print (len(data.distance_tab))
+    #print (len(data.distance_tab))
     if len(data.distance_tab) < 32:
         data.distance_tab.clear()
 
@@ -117,11 +172,11 @@ def LiDARFrameProcessing(frame: Delta2GFrame):
             # Angle 270 is the front of the LIDAR
 
             if frameIndex == (SCAN_STEPS - 1):
-                print("Scan Completed")
-                #print(data.angle_distance_tab)
                 RefineValue()
-                print(data.distance_tab)
-                #print(len(data.distance_tab))
+                #for i in range(len(data.distance_tab)):
+                #    print(round(data.distance_tab[i], 1))
+                    #print("datalen : %d" % len(data.distance_tab))
+                do_action(data.angle_distance_tab)
                 data.angle_distance_tab.clear()
                 data.distance_tab.clear()
         #	for i in range(len(scanSamplesRange)):
