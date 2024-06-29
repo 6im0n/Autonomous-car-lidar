@@ -4,20 +4,22 @@ import time
 import threading
 import sys
 import signal
-
-import socket
-
-TCP_IP = '192.168.4.1'  # IP address of the ESP32 server
-TCP_PORT = 4242
+import os
+import subprocess
 
 #Serial port variables
 #Permission problems under Linus use: sudo chmod 666 /dev/ttyUSB0
-"""
 SERIAL_PORT_WIN = "COM3"
-SERIAL_PORT_LINUX = '/dev/ttyACM0'
+SERIAL_PORT_LINUX = '/dev/rfcomm0'
 SERIAL_PORT = SERIAL_PORT_LINUX
 SERIAL_BAUDRATE = 115200
-"""
+
+import socket  # Import the socket module
+
+# TCP connection variables
+TCP_IP = '192.168.4.1'  # IP address of the ESP32 server
+TCP_PORT = 4242
+
 #Scan variables
 scanSamplesSignalQuality = [0.0]
 scanSamplesRange = [0.0]
@@ -35,6 +37,8 @@ ANGLE_SCALE = 0.01  #Convert received value to degrees (LSB: 0.01 degrees)
 #RANGE_SCALE = 0.25 * 0.001  #Convert received value to meters (LSB: 0.25 mm)
 RANGE_SCALE = 0.25 * 1  #Convert received value to millimeters (LSB: 0.25 mm)
 PRINTABLE = False
+LOOP = True
+
 
 #Delta-2G frame structure
 class Delta2GFrame:
@@ -77,13 +81,13 @@ def RefineValue():
 
 
 def LiDARFrameProcessing(frame: Delta2GFrame):
-    print("Processing Frame")
+    print("-1 salut", sys.stderr)
     global PRINTABLE
     match frame.commandWord:
         case 0xAE:
             #Device Health Information: Speed Failure
             rpm = frame.parameters[0] * ROTATION_SPEED_SCALE
-            print("RPM: %f" % rpm)
+            #print("RPM: %f" % rpm)
         case 0xAD:
             #1st: Rotation speed (1 byte)
             rpm = frame.parameters[0] * ROTATION_SPEED_SCALE
@@ -121,19 +125,21 @@ def LiDARFrameProcessing(frame: Delta2GFrame):
                     #print("Distance: %f" % (distance * RANGE_SCALE))
 
             # Angle 270 is the front of the LIDAR
-
+            print("0 salut", sys.stderr)
             if frameIndex == (SCAN_STEPS - 1):
-                #print(data.angle_distance_tab)
-
-                print("1")
-                print("OK")
-                print("No errors so far")
                 RefineValue()
-                for i in range(len(data.distance_tab)):
-                    print(round(data.distance_tab[i], 1))
-                    print("datalen : %d" % len(data.distance_tab))
-                print("No further info")
-                #print(len(data.distance_tab))
+                print("1 salut", sys.stderr)
+                if PRINTABLE:
+                    print("2 salut", sys.stderr)
+                    #1:OK:No errors so far:700.0:750.0:800.0:900.0:975.0:1050.0:1125.0:1225.0:1375.0:1500.0:2500.0:2750.0:
+                    # 3000.0:3000.0:3000.0:3000.0:3000.0:3000.0:3000.0:3000.0:3000.0:1500.0:1375.0:1225.0:
+                    # 1125.0:1050.0:975.0:900.0:850.0:800.0:750.0:700.0:No further info
+                    response = "1:OK:No errors so far:"
+                    for i in range(len(data.distance_tab)):
+                        response += str(round(data.distance_tab[i], 1)) + ":"
+                    response += "No further info"
+                    PRINTABLE = False
+                # print(len(data.distance_tab))
                 data.angle_distance_tab.clear()
                 data.distance_tab.clear()
         #	for i in range(len(scanSamplesRange)):
@@ -143,7 +149,10 @@ def LiDARFrameProcessing(frame: Delta2GFrame):
         #		print("increment: %f" % angle_increment)
         #		print("Angle: %f" % angle)
 
+    # Port number of the ESP32 server
+
 def LidarMangement():
+    global LOOP
     try:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect((TCP_IP, TCP_PORT))
@@ -154,7 +163,7 @@ def LidarMangement():
     status = 0
     checksum = 0
     lidarFrame = Delta2GFrame()
-    while True:
+    while LOOP:
         rx = client_socket.recv(100)  # Read data from TCP connection
         for by in rx:
             match status:
@@ -234,7 +243,7 @@ def LidarMangement():
                 checksum = (checksum + by) % 0xFFFF
 
 def start_simulation():
-    print("Simulation started")
+    print("1:OK:No errors so far")
 
 def stop_simulation():
     print("Simulation stopped")
@@ -249,8 +258,8 @@ def wheels_dir():
     print("Car wheels direction")
 
 def get_info_lidar():
-    global PRINTABLE
-    PRINTABLE = True
+    """global PRINTABLE
+    PRINTABLE = True"""
 
 def get_current_speed():
     print("Current speed")
@@ -282,26 +291,64 @@ AI_REQUEST = [
     ["GET_CAR_SPEED_MIN", get_car_speed_min]
 ]
 
-def signal_handler(sig, frame):
-    sys.exit(0)
-
-
-def main():
-    LidarMangement()
 """
+import subprocess
+
 def main():
-    signal.signal(signal.SIGINT, signal_handler)
-    #lidarThread = threading.Thread(target=LidarMangement)
-    #lidarThread.start()
+    lidarThread = threading.Thread(target=LidarMangement)
+    lidarThread.start()
+    c_prog = "../ai"
+    process = subprocess.Popen(c_prog, stdout=subprocess.PIPE)
     global PRINTABLE
+    global LOOP
     while True:
-        LidarMangement()
-        readline = input()
+        try:
+            readline = process.communicate()
+        except KeyboardInterrupt:
+            LOOP = False
+            break
         if readline == "exit":
+            LOOP = False
             break
         print(readline)
-        if readline[len(readline) - 1] == '\n':
-            print("The command ends with a newline")
+"""
+
+"""
+import queue
+
+CMD = queue.Queue()
+
+def listenInput():
+    global CMD
+    global LOOP
+    while LOOP:
+        try:
+            readline = input()
+        except KeyboardInterrupt:
+            LOOP = False
+        if readline == "exit":
+            LOOP = False
+        else:
+            CMD.put_nowait(readline)
+
+
+def main():
+    readline = ""
+    lidarThread = threading.Thread(target=LidarMangement)
+    listenTread = threading.Thread(target=listenInput)
+    lidarThread.start()
+    listenTread.start()
+    global PRINTABLE
+    global LOOP
+    global CMD
+    while True:
+        if not LOOP:
+            exit(0)
+        try:
+            readline = CMD.get()
+        except queue.Empty:
+            continue
+        print(readline)
         if any(readline == command[0] for command in AI_REQUEST):
             for command in AI_REQUEST:
                 if readline == command[0]:
@@ -309,10 +356,85 @@ def main():
                     break
         else:
             print("The command is not recognized")
-        PRINTABLE = False
-    #lidarThread.join()
+    lidarThread.join()
+    listenTread.join()
 """
 
+
+
+"""def main():
+    lidarThread = threading.Thread(target=LidarMangement)
+    lidarThread.start()
+    global PRINTABLE
+    global LOOP
+    while LOOP:
+        try:
+            cmd = input()
+        except KeyboardInterrupt:
+            LOOP = False
+            break
+        if cmd == "exit":
+            LOOP = False
+            break
+        if any(cmd == command[0] for command in AI_REQUEST):
+            for command in AI_REQUEST:
+                if cmd == command[0]:
+                    command[1]()
+                    break
+        else:
+            print("The command is not recognized")
+    lidarThread.join()"""
+
+
+"""def main():
+    # Start the C program
+    c_process = subprocess.Popen(
+        ['../tek1/Need4Stek/ai'],  # Replace with the path to your compiled C program
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    lidarThread = threading.Thread(target=LidarMangement)
+    lidarThread.start()
+
+    global LOOP
+    LOOP = True
+
+    try:
+        while LOOP:
+            try:
+                # Read the output from the C program
+                cmd = c_process.stdout.readline().strip()
+                if cmd == "":
+                    continue
+
+                if cmd == "exit":
+                    print("Exiting...")
+                    LOOP = False
+                    break
+                print(f"Received command: {cmd}")
+                command_found = False
+                for command in AI_REQUEST:
+                    if cmd == command[0]:
+                        command[1]()
+                        command_found = True
+                        break
+
+                if not command_found:
+                    print(f"The command '{cmd}' is not recognized")
+
+            except EOFError:
+                print("EOFError encountered. Exiting loop.")
+                LOOP = False
+                break
+
+    finally:
+        LOOP = False  # Ensure the loop is terminated
+        c_process.terminate()  # Ensure the C process is terminated
+        lidarThread.join()  # Wait for the lidar thread to finish
+        print("Lidar management thread terminated.")"""
 
 if __name__ == "__main__":
     main()
