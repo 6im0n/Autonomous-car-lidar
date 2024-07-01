@@ -35,6 +35,20 @@ ANGLE_SCALE = 0.01  #Convert received value to degrees (LSB: 0.01 degrees)
 #RANGE_SCALE = 0.25 * 0.001  #Convert received value to meters (LSB: 0.25 mm)
 RANGE_SCALE = 0.25 * 1  #Convert received value to millimeters (LSB: 0.25 mm)
 PRINTABLE = False
+MEMORY = { 0.0: 0.0 }
+COUNT = 0
+
+def compare_maps(data_map):
+    global MEMORY
+    global COUNT
+    if data_map == MEMORY:
+        COUNT += 1
+    else:
+        MEMORY = data_map
+        COUNT = 0
+    if COUNT == 5:
+        return True
+    return False
 
 
 #Delta-2G frame structure
@@ -181,6 +195,8 @@ def LiDARFrameProcessing(frame: Delta2GFrame, radioSerial: serial.Serial):
                 RefineValue()
                 #print("datalen : %d" % len(data.distance_tab))
                 do_action(data.angle_distance_tab, radioSerial)
+                if compare_maps(data.angle_distance_tab):
+                    serial.write("CAR_BACKWARDS:1.0\n".encode())
                 data.angle_distance_tab.clear()
                 data.distance_tab.clear()
         #	for i in range(len(scanSamplesRange)):
