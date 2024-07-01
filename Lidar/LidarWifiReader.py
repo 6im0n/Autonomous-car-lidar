@@ -53,73 +53,78 @@ class data:
     angle_distance_tab = {0.0: 0.0}
     distance_tab = [0.0]
 
-def update_speed(data_map, radioSerial):
-    distance = list(data_map.items())[len(data_map) // 2]
-    setup_speed = 0.0
+def update_speed(data_map):
+    key_dist, distance = list(data_map.items())[len(data_map) // 2]
+    right_key, right = list(data_map.items())[-1]
+    left_key, left = list(data_map.items())[0]
+    print(key_dist)
+    if(distance >= 2000 ):
+        return 0.5
+    if (distance >= 1000):
+        return 0.4
+    if (distance >= 600):
+        return 0.3
+    if (distance >= 300):
+        return 0.25
+    if (distance >= 200  or left >= 200 or right >= 200):
+        return -1
 
+
+class Car:
+    def __init__(self):
+        self.angle = 0.0
+        self.lidar = []
+
+def get_angle(data_map):
+    key_dist, distance = list(data_map.items())[len(data_map) // 2]
+    if distance >= 1500:
+        return 0.0
+    elif distance >= 1000:
+       return 0.05
+    elif distance >= 600:
+       return 0.1
+    elif distance >= 400:
+       return 0.2
+    elif distance >= 200:
+       return 0.3
+    elif distance < 200 and distance >= 50:
+       return 0.7
+    else:
+        return 1
+
+def update_angle(data_map):
+    key_dist, distance = list(data_map.items())[len(data_map) // 2]
+    right_key, right = list(data_map.items())[-1]
+    left_key, left = list(data_map.items())[0]
+    dir = -1 if left - right < 0 else 1
+    angle = get_angle(data_map)
+    return angle * dir
 
 def do_action(data_map, radioSerial):
-    last_key, last = list(data_map.items())[-1]
-    first_key, first = list(data_map.items())[0]
-    middle_key, middle = list(data_map.items())[len(data_map) // 2]
-    setup_speed = 0.0
-    if middle < 100:
-        setup_speed = 0.1
-    elif middle < 200:
-        setup_speed = 0.3
-    elif middle < 300:
-        setup_speed = 0.5
-    elif middle < 500:
-        setup_speed = 0.7
-    elif middle < 600:
-        setup_speed = 0.7
-    elif middle < 10000:
-        setup_speed = 0.8
-
-    if (middle >= 1500):
-        setup_angle = 0.00
-    elif (middle >= 700):
-        setup_angle = 0.05
-    elif (middle >= 600):
-        setup_angle = 0.1
-    elif (middle >= 400):
-        setup_angle = 0.2
-    elif (middle >= 200):
-        setup_angle = 0.3
-    elif (middle < 200 and middle >= 50):
-        setup_angle = 0.7
-    else:
-        setup_angle = 1
-
-    if (first - last) < 0:
-        signedangle = -1
-    else:
-        signedangle = 1
-    setup_angle *= signedangle
-    forward = "CAR_FORWARD:" + str(setup_angle) + "\n"
-    send_speed = "WHEELS_SPEED:" + str(setup_speed) + "\n"
-    print(middle)
-    print(send_speed)
+    speed = update_speed(data_map)
+    if speed == -1:
+        forward = "CAR_BACKWARDS:" + str(0.4) + "\n"
+    else :
+        forward = "CAR_FORWARD:" + str(speed) + "\n"
+    angle = "WHEELS_DIR:" + str(update_angle(data_map)) + "\n"
+    print(forward)
+    print(angle)
+    radioSerial.write(forward.encode())
+    radioSerial.write(angle.encode())
+##print(send_speed)
 
 
 def RefineValue():
     valuetodelete = len(data.angle_distance_tab.values()) - 32
     lastDistance = 0
     for angle, distance in data.angle_distance_tab.items():
-        if angle < 153.9 or angle > 206.0:
             data.distance_tab.append(distance)
             #print("Angle: %f" % angle)
             #print("Distance: %f" % distance)
             lastDistance = distance
             continue
-        if valuetodelete > 0 and (abs(distance - lastDistance) < 0.13):
-            valuetodelete -= 1
-        else:
-            data.distance_tab.append(distance)
-            #print("Angle: %f" % angle)
-            #print("Distance: %f" % distance)
-            lastDistance = distance
 
+    print(data.distance_tab)
     #print (len(data.distance_tab))
     if len(data.distance_tab) < 32:
         data.distance_tab.clear()
@@ -172,11 +177,10 @@ def LiDARFrameProcessing(frame: Delta2GFrame, radioSerial: serial.Serial):
             # Angle 270 is the front of the LIDAR
 
             if frameIndex == (SCAN_STEPS - 1):
-                #RefineValue()
-                print(data.angle_distance_tab)
-                print("\n\n\n")
+                data.angle_distance_tab = dict(sorted(data.angle_distance_tab.items()))
+                RefineValue()
                 #print("datalen : %d" % len(data.distance_tab))
-                #do_action(data.angle_distance_tab, radioSerial)
+                do_action(data.angle_distance_tab, radioSerial)
                 data.angle_distance_tab.clear()
                 data.distance_tab.clear()
         #	for i in range(len(scanSamplesRange)):
