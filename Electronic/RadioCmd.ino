@@ -38,7 +38,7 @@ void setup()
   pinMode (wheels_dir, OUTPUT);
   pinMode (13, OUTPUT); //led
   SPI.begin();
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.print("init start\n");
   Serial.println("Please start the radio transmitter");
   Serial.println("You have 5 sec to start it");
@@ -80,19 +80,16 @@ void parseString(String str) {
   if (str.startsWith("CAR_FORWARD:")) {
     String valueStr = str.substring(12);
     car_data.forward = valueStr.toFloat();
-    return;
   }
   // Check for CAR_BACKWARDS
   if (str.startsWith("CAR_BACKWARDS:")){
     String valueStr = str.substring(14);
     car_data.backward = valueStr.toFloat();
-    return;
   }
   // Check for CAR_WHEELS
   else if (str.startsWith("WHEELS_DIR:")) {
     String valueStr = str.substring(11);
     car_data.dir = valueStr.toFloat();
-    return;
   }
 }
 
@@ -140,7 +137,7 @@ void car_send(void)
     {
       car_command.pow = 70 - (70 * car_data.forward);
       car_data.forward == 0.0 ? car_command.pow = 125 : 0;
-      car_command.pow < 50 ? car_command.pow = 50 : 0;
+      //car_command.pow < 50 ? car_command.pow = 50 : 0;
     }
   }
   if (car_data.backward != -42.0) {
@@ -150,7 +147,7 @@ void car_send(void)
         carPowerWrite(200);
         delay(200);
         carPowerWrite(125);
-        delay(200);
+        delay(500);
         carPowerWrite(200);
         delay(200);
         carPowerWrite(125);
@@ -177,8 +174,8 @@ void loop()
 
     //Serial.println(car_data.forward);
     //Serial.println(car_data.backward);
-    Serial.println(car_data.dir);
-    Serial.println(car_command.dir);
+    //Serial.println(car_command.pow);
+    //Serial.println(car_command.dir);
   }
 }
 
