@@ -4,7 +4,7 @@ import time
 import threading
 import sys
 import signal
-import pydualsense
+import socket  # Import the socket module
 
 #Serial port variables
 #Permission problems under Linus use: sudo chmod 666 /dev/ttyUSB0
@@ -12,8 +12,8 @@ SERIAL_PORT_WIN = "COM3"
 SERIAL_PORT_LINUX = '/dev/ttyACM0'
 SERIAL_PORT = SERIAL_PORT_LINUX
 SERIAL_BAUDRATE = 115200
+old_time = time.time()
 
-import socket  # Import the socket module
 
 # TCP connection variables
 TCP_IP = '192.168.4.1'  # IP address of the ESP32 server
@@ -36,12 +36,14 @@ ANGLE_SCALE = 0.01  #Convert received value to degrees (LSB: 0.01 degrees)
 #RANGE_SCALE = 0.25 * 0.001  #Convert received value to meters (LSB: 0.25 mm)
 RANGE_SCALE = 0.25 * 1  #Convert received value to millimeters (LSB: 0.25 mm)
 PRINTABLE = False
-MEMORY = { 0.0: 0.0 }
+MEMORY = {0.0: 0.0}
 COUNT = 0
+
 
 def compare_maps(data_map):
     global MEMORY
     global COUNT
+    return False
     if data_map == MEMORY:
         COUNT += 1
     else:
@@ -68,64 +70,73 @@ class data:
     angle_distance_tab = {0.0: 0.0}
     distance_tab = [0.0]
 
+
 def update_speed(data_map):
     key_dist, distance = list(data_map.items())[len(data_map) // 2]
     right_key, right = list(data_map.items())[-1]
     left_key, left = list(data_map.items())[0]
-    print(key_dist)
-    if(distance >= 2000 ):
+    print("distance", distance)
+    print("left ", left)
+    print("right", right)
+    if 300 > distance >= 0.0 or 300 > left >= 0.0 or 300 > right >= 0.0:
+        return -1.0
+    if distance >= 5000:
         return 0.5
-    if (distance >= 1000):
+    if distance >= 4000:
         return 0.4
-    if (distance >= 600):
+    if distance >= 3000:
         return 0.3
-    if (distance >= 300):
+    if distance >= 400:
         return 0.25
-    if (distance >= 200  or left >= 200 or right >= 200):
-        return -1
+    return 0.01
 
-
-class Car:
-    def __init__(self):
-        self.angle = 0.0
-        self.lidar = []
 
 def get_angle(data_map):
     key_dist, distance = list(data_map.items())[len(data_map) // 2]
     if distance >= 1500:
         return 0.0
     elif distance >= 1000:
-       return 0.05
+        return 0.05
     elif distance >= 600:
-       return 0.1
+        return 0.5
     elif distance >= 400:
-       return 0.2
+        return 0.8
     elif distance >= 200:
-       return 0.3
-    elif distance < 200 and distance >= 50:
-       return 0.7
+        return 0.85
+    elif 200 > distance >= 50:
+        return 0.9
     else:
         return 1
 
-def update_angle(data_map):
-    key_dist, distance = list(data_map.items())[len(data_map) // 2]
-    right_key, right = list(data_map.items())[-1]
-    left_key, left = list(data_map.items())[0]
-    dir = -1 if left - right < 0 else 1
+
+def update_angle(data_map, speed):
+    right_key, left = list(data_map.items())[-1]
+    left_key, right = list(data_map.items())[0]
+    direction = -1 if right - left < 0 else 1
     angle = get_angle(data_map)
-    return angle * dir
+    if speed == -1:
+        return angle * -direction
+    else:
+        return angle * direction
+
 
 def do_action(data_map, radioSerial):
+    global old_time
     speed = update_speed(data_map)
     if speed == -1:
-        forward = "CAR_BACKWARDS:" + str(0.4) + "\n"
-    else :
+        forward = "CAR_BACKWARDS:" + str(1.0) + "\n"
+    else:
         forward = "CAR_FORWARD:" + str(speed) + "\n"
-    angle = "WHEELS_DIR:" + str(update_angle(data_map)) + "\n"
+    angle = "WHEELS_DIR:" + str(update_angle(data_map, speed)) + "\n"
     print(forward)
     print(angle)
     radioSerial.write(forward.encode())
-    radioSerial.write(angle.encode())
+    if (time.time() - old_time) > 0.1:
+        radioSerial.write(angle.encode())
+    #if (time.time() - old_time) > 1:
+    print((radioSerial.read(30)))
+
+
 ##print(send_speed)
 
 
@@ -133,16 +144,11 @@ def RefineValue():
     valuetodelete = len(data.angle_distance_tab.values()) - 32
     lastDistance = 0
     for angle, distance in data.angle_distance_tab.items():
-            data.distance_tab.append(distance)
-            #print("Angle: %f" % angle)
-            #print("Distance: %f" % distance)
-            lastDistance = distance
-            continue
-
-    print(data.distance_tab)
-    #print (len(data.distance_tab))
-    if len(data.distance_tab) < 32:
-        data.distance_tab.clear()
+        data.distance_tab.append(distance)
+        #print("Angle: %f" % angle)
+        #print("Distance: %f" % distance)
+        lastDistance = distance
+        continue
 
 
 def LiDARFrameProcessing(frame: Delta2GFrame, radioSerial: serial.Serial):
@@ -193,11 +199,12 @@ def LiDARFrameProcessing(frame: Delta2GFrame, radioSerial: serial.Serial):
 
             if frameIndex == (SCAN_STEPS - 1):
                 data.angle_distance_tab = dict(sorted(data.angle_distance_tab.items()))
+                print(data.angle_distance_tab)
                 RefineValue()
                 #print("datalen : %d" % len(data.distance_tab))
                 do_action(data.angle_distance_tab, radioSerial)
                 if compare_maps(data.angle_distance_tab):
-                    serial.write("CAR_BACKWARDS:1.0\n".encode())
+                    radioSerial.write("CAR_BACKWARDS:1.0\n".encode())
                 data.angle_distance_tab.clear()
                 data.distance_tab.clear()
         #	for i in range(len(scanSamplesRange)):
@@ -210,45 +217,8 @@ def LiDARFrameProcessing(frame: Delta2GFrame, radioSerial: serial.Serial):
     # Port number of the ESP32 server
 
 
-def manage_controller(radioSerial, ds):
-    while True:
-        # Lire les valeurs des joysticks
-        left_x = ds.state.LX  # Position du joystick gauche sur l'axe X
-        left_y = ds.state.LY  # Position du joystick gauche sur l'axe Y
-        right_x = ds.state.RX  # Position du joystick droit sur l'axe X
-        right_y = ds.state.RY  # Position du joystick droit sur l'axe Y
-
-        # Lire les valeurs des gâchettes
-        l2_value = ds.state.L2  # Position de la gâchette gauche
-        r2_value = ds.state.R2  # Position de la gâchette droite
-
-        # Lire l'état des boutons
-        cross_pressed = ds.state.cross  # État du bouton Croix
-        circle_pressed = ds.state.circle  # État du bouton Cercle
-        square_pressed = ds.state.square  # État du bouton Carré
-        triangle_pressed = ds.state.triangle  # État du bouton Triangle
-
-        if cross_pressed:
-            break
-
-        if r2_value > 0 and l2_value == 0:
-            radioSerial.write(f"CAR_FORWARD:{1.0 * r2_value / 255}\n".encode())
-        if l2_value > 0 and r2_value == 0:
-            radioSerial.write(f"CAR_BACKWARDS:{1.0 * l2_value / 255}\n".encode())
-        time.sleep(0.001)
-        if r2_value == 0 and l2_value == 0:
-            radioSerial.write(f"CAR_FORWARD:{0.0}\n".encode())
-        time.sleep(0.001)
-        if left_x < 0:
-            radioSerial.write(f"WHEELS_DIR:{-1.0 * left_x / 128}\n".encode())
-        if left_x > 0:
-            radioSerial.write(f"WHEELS_DIR:{-1.0 * left_x / 127}\n".encode())
-        time.sleep(0.001)
-        if left_x == 0 or left_x == -1.0:
-            radioSerial.write(f"WHEELS_DIR:{0}\n".encode())
-        time.sleep(0.001)
-
 def main():
+    #Setup serial connection
     try:
         radioSerial = serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=0)
     except serial.serialutil.SerialException:
@@ -262,8 +232,6 @@ def main():
         print(f"ERROR: TCP Connection Error: {e}")
         return
 
-    ds = pydualsense.pydualsense()
-    ds.init()
     status = 0
     checksum = 0
     lidarFrame = Delta2GFrame()
@@ -276,9 +244,7 @@ def main():
         except socket.error as e:
             print(f"ERROR: TCP Read Error: {e}")
             break
-        triangle_pressed = ds.state.triangle
-        if triangle_pressed:
-            manage_controller(radioSerial, ds)
+
         for by in rx:
             match status:
                 case 0:
