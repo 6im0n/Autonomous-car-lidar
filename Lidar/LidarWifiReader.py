@@ -71,21 +71,31 @@ class data:
 
 
 def update_speed(data_map):
-    key_dist, distance = list(data_map.items())[len(data_map) // 2]
-    right_key, right = list(data_map.items())[-1]
-    left_key, left = list(data_map.items())[0]
-    print("distance", distance)
-    print("left ", left)
-    print("right", right)
-    if 300 > distance >= 0.0 or 300 > left >= 0.0 or 300 > right >= 0.0:
+    key_dist1, distance1 = list(data_map.items())[len(data_map) // 2 - 1]
+    key_dist2, distance2 = list(data_map.items())[len(data_map) // 2]
+    key_dist3, distance3 = list(data_map.items())[len(data_map) // 2 + 1]
+    distancem = (distance1 + distance2 + distance3) / 3
+    right_key, right1 = list(data_map.items())[-1]
+    right_key, right2 = list(data_map.items())[-2]
+    right_key, right3 = list(data_map.items())[-3]
+    rightm = (right1 + right2 + right3) / 3
+    left_key, left1 = list(data_map.items())[0]
+    left_key, left2 = list(data_map.items())[1]
+    left_key, left3 = list(data_map.items())[2]
+    leftm = (left1 + left2 + left3) / 3
+    print("distance", distancem)
+    print("left ", leftm)
+    print("right", rightm)
+    moyenne = (distancem + leftm + rightm) /3
+    if 420 > moyenne >= 0.0 :
         return -1.0
-    if (distance >= 5000):
+    if (distancem >= 5000):
         return 0.5
-    if (distance >= 4000):
+    if (distancem >= 4000):
         return 0.4
-    if (distance >= 3000):
+    if (distancem >= 3000):
         return 0.3
-    if (distance >= 400):
+    if (distancem >= 450):
         return 0.25
     return 0.1
 
@@ -97,22 +107,30 @@ class Car:
 
 
 def get_angle(data_map):
-    key_dist, distance = list(data_map.items())[len(data_map) // 2]
-    if distance >= 1500:
+
+    """key_dist1, distance1 = list(data_map.items())[len(data_map) // 2 - 1]
+    key_dist2, distance2 = list(data_map.items())[len(data_map) // 2]
+    key_dist3, distance3 = list(data_map.items())[len(data_map) // 2 + 1]
+    distancem = (distance1 + distance2 + distance3) /3
+    if distancem >= 1500:
         return 0.0
-    elif distance >= 1000:
+    elif distancem >= 1000:
         return 0.05
-    elif distance >= 600:
-        return 0.5
-    elif distance >= 400:
-        return 0.8
-    elif distance >= 200:
+    elif distancem >= 800:
+        return 0.25
+    elif distancem >= 700:
+        return 0.4
+    elif distancem >= 600:
+        return 0.55
+    elif distancem >= 400:
+        return 0.7
+    elif distancem >= 200:
         return 0.85
-    elif distance > 200 and distance >= 50:
+    elif distancem > 200 and distancem >= 50:
         return 0.9
     else:
         return 1
-
+"""
 
 def update_angle(data_map, speed):
     key_dist, distance = list(data_map.items())[len(data_map) // 2]
