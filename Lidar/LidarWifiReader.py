@@ -8,7 +8,7 @@ import signal
 #Serial port variables
 #Permission problems under Linus use: sudo chmod 666 /dev/ttyUSB0
 SERIAL_PORT_WIN = "COM3"
-SERIAL_PORT_LINUX = '/dev/rfcomm0'
+SERIAL_PORT_LINUX = '/dev/ttyACM0'
 SERIAL_PORT = SERIAL_PORT_LINUX
 SERIAL_BAUDRATE = 115200
 
@@ -53,13 +53,16 @@ class data:
     angle_distance_tab = {0.0: 0.0}
     distance_tab = [0.0]
 
+def update_speed(data_map, radioSerial):
+    distance = list(data_map.items())[len(data_map) // 2]
+    setup_speed = 0.0
 
-def do_action(data_map):
+
+def do_action(data_map, radioSerial):
     last_key, last = list(data_map.items())[-1]
     first_key, first = list(data_map.items())[0]
     middle_key, middle = list(data_map.items())[len(data_map) // 2]
-    setup_speed = 0
-    setup_angle = 0
+    setup_speed = 0.0
     if middle < 100:
         setup_speed = 0.1
     elif middle < 200:
@@ -93,9 +96,9 @@ def do_action(data_map):
     else:
         signedangle = 1
     setup_angle *= signedangle
-    send_dir = "WHEELS_DIR:" + str(setup_angle) + "\n"
+    forward = "CAR_FORWARD:" + str(setup_angle) + "\n"
     send_speed = "WHEELS_SPEED:" + str(setup_speed) + "\n"
-    print(send_dir)
+    print(middle)
     print(send_speed)
 
 
@@ -122,7 +125,7 @@ def RefineValue():
         data.distance_tab.clear()
 
 
-def LiDARFrameProcessing(frame: Delta2GFrame):
+def LiDARFrameProcessing(frame: Delta2GFrame, radioSerial: serial.Serial):
     match frame.commandWord:
         case 0xAE:
             #Device Health Information: Speed Failure
@@ -159,7 +162,9 @@ def LiDARFrameProcessing(frame: Delta2GFrame):
                 scanSamplesSignalQuality.append(signalQuality)
                 scanSamplesRange.append(distance * RANGE_SCALE)
                 angle = (startAngle) + (i * ((360.0 / SCAN_STEPS) / sampleCnt))
-                if 330.0 < angle < 360.0 or 0.0 < angle < 30.0:
+                if 0 <= angle <= 30:
+                    angle = angle + 360
+                if 330.0 < angle < 390.0:
                     data.angle_distance_tab[angle] = distance * RANGE_SCALE
                     #print("---------Angle: %f" % angle)
                     #print("Distance: %f" % (distance * RANGE_SCALE))
@@ -167,11 +172,11 @@ def LiDARFrameProcessing(frame: Delta2GFrame):
             # Angle 270 is the front of the LIDAR
 
             if frameIndex == (SCAN_STEPS - 1):
-                RefineValue()
-                #for i in range(len(data.distance_tab)):
-                #    print(round(data.distance_tab[i], 1))
+                #RefineValue()
+                print(data.angle_distance_tab)
+                print("\n\n\n")
                 #print("datalen : %d" % len(data.distance_tab))
-                do_action(data.angle_distance_tab)
+                #do_action(data.angle_distance_tab, radioSerial)
                 data.angle_distance_tab.clear()
                 data.distance_tab.clear()
         #	for i in range(len(scanSamplesRange)):
@@ -185,6 +190,12 @@ def LiDARFrameProcessing(frame: Delta2GFrame):
 
 
 def main():
+    #Setup serial connection
+    try:
+        radioSerial = serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=0)
+    except serial.serialutil.SerialException:
+        print("ERROR: Serial Connection Error (RADIO)")
+        return
     try:
         # Setup TCP connection
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -274,7 +285,7 @@ def main():
                     #Compare received and calculated frame checksum
                     if lidarFrame.checksum == checksum:
                         #Checksum match: Valid frame
-                        LiDARFrameProcessing(lidarFrame)
+                        LiDARFrameProcessing(lidarFrame, radioSerial)
                     else:
                         #Checksum missmatach: Invalid frame
                         print("ERROR: Frame Checksum Failed");
