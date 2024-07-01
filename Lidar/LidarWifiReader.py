@@ -4,6 +4,7 @@ import time
 import threading
 import sys
 import signal
+import pydualsense
 
 #Serial port variables
 #Permission problems under Linus use: sudo chmod 666 /dev/ttyUSB0
@@ -209,8 +210,45 @@ def LiDARFrameProcessing(frame: Delta2GFrame, radioSerial: serial.Serial):
     # Port number of the ESP32 server
 
 
+def manage_controller(radioSerial, ds):
+    while True:
+        # Lire les valeurs des joysticks
+        left_x = ds.state.LX  # Position du joystick gauche sur l'axe X
+        left_y = ds.state.LY  # Position du joystick gauche sur l'axe Y
+        right_x = ds.state.RX  # Position du joystick droit sur l'axe X
+        right_y = ds.state.RY  # Position du joystick droit sur l'axe Y
+
+        # Lire les valeurs des gâchettes
+        l2_value = ds.state.L2  # Position de la gâchette gauche
+        r2_value = ds.state.R2  # Position de la gâchette droite
+
+        # Lire l'état des boutons
+        cross_pressed = ds.state.cross  # État du bouton Croix
+        circle_pressed = ds.state.circle  # État du bouton Cercle
+        square_pressed = ds.state.square  # État du bouton Carré
+        triangle_pressed = ds.state.triangle  # État du bouton Triangle
+
+        if cross_pressed:
+            break
+
+        if r2_value > 0 and l2_value == 0:
+            radioSerial.write(f"CAR_FORWARD:{1.0 * r2_value / 255}\n".encode())
+        if l2_value > 0 and r2_value == 0:
+            radioSerial.write(f"CAR_BACKWARDS:{1.0 * l2_value / 255}\n".encode())
+        time.sleep(0.001)
+        if r2_value == 0 and l2_value == 0:
+            radioSerial.write(f"CAR_FORWARD:{0.0}\n".encode())
+        time.sleep(0.001)
+        if left_x < 0:
+            radioSerial.write(f"WHEELS_DIR:{-1.0 * left_x / 128}\n".encode())
+        if left_x > 0:
+            radioSerial.write(f"WHEELS_DIR:{-1.0 * left_x / 127}\n".encode())
+        time.sleep(0.001)
+        if left_x == 0 or left_x == -1.0:
+            radioSerial.write(f"WHEELS_DIR:{0}\n".encode())
+        time.sleep(0.001)
+
 def main():
-    #Setup serial connection
     try:
         radioSerial = serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=0)
     except serial.serialutil.SerialException:
@@ -224,6 +262,8 @@ def main():
         print(f"ERROR: TCP Connection Error: {e}")
         return
 
+    ds = pydualsense.pydualsense()
+    ds.init()
     status = 0
     checksum = 0
     lidarFrame = Delta2GFrame()
@@ -236,7 +276,9 @@ def main():
         except socket.error as e:
             print(f"ERROR: TCP Read Error: {e}")
             break
-
+        triangle_pressed = ds.state.triangle
+        if triangle_pressed:
+            manage_controller(radioSerial, ds)
         for by in rx:
             match status:
                 case 0:
