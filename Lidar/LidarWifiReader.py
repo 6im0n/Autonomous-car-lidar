@@ -71,20 +71,28 @@ class data:
     angle_distance_tab = {0.0: 0.0}
     distance_tab = [0.0]
 
+def compute_average(datalist):
+    return sum(datalist) / len(datalist)
+
 
 def update_speed(data_map):
-    key_dist1, distance1 = list(data_map.items())[len(data_map) // 2 - 2]
-    key_dist2, distance2 = list(data_map.items())[len(data_map) // 2]
-    key_dist3, distance3 = list(data_map.items())[len(data_map) // 2 + 2]
-    distancem = (distance1 + distance2 + distance3) / 3
-    right_key, right1 = list(data_map.items())[-1]
-    right_key, right2 = list(data_map.items())[-3]
-    right_key, right3 = list(data_map.items())[-5]
-    rightm = (right1 + right2 + right3) / 3
-    left_key, left1 = list(data_map.items())[0]
-    left_key, left2 = list(data_map.items())[2]
-    left_key, left3 = list(data_map.items())[4]
-    leftm = (left1 + left2 + left3) / 3
+    if len(data_map) < 16:
+        return -1
+    average_list = []
+    for i in range(len(data_map) // 2 - 3, len(data_map) // 2 + 3):
+        key, value = list(data_map.items())[i]
+        average_list.append(value)
+    distancem = compute_average(average_list)
+    average_list.clear()
+    for i in range(0, 5):
+        key, value = list(data_map.items())[i]
+        average_list.append(value)
+    leftm = compute_average(average_list)
+    average_list.clear()
+    for i in range(len(data_map) - 5, len(data_map)):
+        key, value = list(data_map.items())[i]
+        average_list.append(value)
+    rightm = compute_average(average_list)
     print("distance", distancem)
     print("left ", leftm)
     print("right", rightm)
@@ -109,18 +117,23 @@ class Car:
 
 
 def get_angle(data_map):
-    key_dist1, distance1 = list(data_map.items())[len(data_map) // 2 - 2]
-    key_dist2, distance2 = list(data_map.items())[len(data_map) // 2]
-    key_dist3, distance3 = list(data_map.items())[len(data_map) // 2 + 2]
-    distancem = (distance1 + distance2 + distance3) / 3
-    right_key, right1 = list(data_map.items())[-1]
-    right_key, right2 = list(data_map.items())[-3]
-    right_key, right3 = list(data_map.items())[-5]
-    rightm = (right1 + right2 + right3) / 3
-    left_key, left1 = list(data_map.items())[0]
-    left_key, left2 = list(data_map.items())[2]
-    left_key, left3 = list(data_map.items())[4]
-    leftm = (left1 + left2 + left3) / 3
+    if len(data_map) < 16:
+        return 0
+    average_list = []
+    for i in range(len(data_map) // 2 - 3, len(data_map) // 2 + 3):
+        key, value = list(data_map.items())[i]
+        average_list.append(value)
+    distancem = compute_average(average_list)
+    average_list.clear()
+    for i in range(0, 5):
+        key, value = list(data_map.items())[i]
+        average_list.append(value)
+    leftm = compute_average(average_list)
+    average_list.clear()
+    for i in range(len(data_map) - 5, len(data_map)):
+        key, value = list(data_map.items())[i]
+        average_list.append(value)
+    rightm = compute_average(average_list)
     min_val = min(distancem, rightm, leftm)
     if min_val >= 1500:
         return 0.0
@@ -171,6 +184,8 @@ def get_angle(data_map):
 """
 
 def update_angle(data_map, speed):
+    if len(data_map) < 16:
+        return 0
     key_dist, distance = list(data_map.items())[len(data_map) // 2]
     right_key, left = list(data_map.items())[-1]
     left_key, right = list(data_map.items())[0]
@@ -255,7 +270,7 @@ def LiDARFrameProcessing(frame: Delta2GFrame, radioSerial: serial.Serial):
                 angle = (startAngle) + (i * ((360.0 / SCAN_STEPS) / sampleCnt))
                 if 0 <= angle <= 50:
                     angle = angle + 360
-                if 310.0 < angle < 410.0:
+                if (310.0 < angle < 410.0) and signalQuality > 0:
                     data.angle_distance_tab[angle] = distance * RANGE_SCALE
                     #print("---------Angle: %f" % angle)
                     #print("Distance: %f" % (distance * RANGE_SCALE))
