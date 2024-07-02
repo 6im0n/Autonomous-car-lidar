@@ -109,7 +109,6 @@ class Car:
 
 
 def get_angle(data_map):
-
     key_dist1, distance1 = list(data_map.items())[len(data_map) // 2 - 2]
     key_dist2, distance2 = list(data_map.items())[len(data_map) // 2]
     key_dist3, distance3 = list(data_map.items())[len(data_map) // 2 + 2]
@@ -141,6 +140,35 @@ def get_angle(data_map):
         return 0.9
     else:
         return 1
+"""
+    max_angle, max_distance = max(data_map.items(), key=lambda x: x[1])
+    max_index = list(data_map.keys()).index(max_angle)
+
+    # Step 2: Calculate the middle index
+    map_length = len(data_map)
+    middle_index = map_length // 2
+
+    # Step 3: Compare the index of maximum distance with the middle index
+    progression = max_index - middle_index
+
+    # Step 4: Calculate the percentage progress within the range of -1 to 1
+    max_progress = map_length // 2  # Maximum possible progression is half the map length
+    normalized_progress = progression / max_progress  # Normalize to range [-1, 1]
+
+    print(f"Normalized progression: {normalized_progress}")
+
+    # Determine direction based on normalized_progress
+    if normalized_progress > 0:
+        print(f"Robot should turn right based on progression of {normalized_progress}.")
+    elif normalized_progress < 0:
+        print(f"Robot should turn left based on progression of {normalized_progress}.")
+    else:
+        print("Robot is already pointing towards the maximum distance.")
+
+    # Optionally, print the maximum distance and its angle
+    print(f"Maximum distance: {max_distance} at angle {max_angle} and at index {max_index}")
+    return normalized_progress
+"""
 
 def update_angle(data_map, speed):
     key_dist, distance = list(data_map.items())[len(data_map) // 2]
