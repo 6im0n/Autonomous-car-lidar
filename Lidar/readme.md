@@ -16,7 +16,7 @@ The lidar on the other part for same 60 degrees FOV has 57 values, so each value
 
 
 ### wirering
-RED wirering is the 5V (directly connected to the motor)
+RED wirering is the 3.3V (directly connected to the motor)
 BLACK wirering is the GND (directly connected to the motor)
 ORANGE wirering is the 5V for the lidar
 WHITE wirering is the signal for the lidar

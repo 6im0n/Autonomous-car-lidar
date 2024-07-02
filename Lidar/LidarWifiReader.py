@@ -13,7 +13,9 @@ SERIAL_PORT_WIN = "COM3"
 SERIAL_PORT_LINUX = '/dev/ttyACM0'
 SERIAL_PORT = SERIAL_PORT_LINUX
 SERIAL_BAUDRATE = 115200
+
 old_time = time.time()
+zero_time = time.time()
 
 # TCP connection variables
 TCP_IP = '192.168.4.1'  # IP address of the ESP32 server
@@ -71,23 +73,23 @@ class data:
 
 
 def update_speed(data_map):
-    key_dist1, distance1 = list(data_map.items())[len(data_map) // 2 - 1]
+    key_dist1, distance1 = list(data_map.items())[len(data_map) // 2 - 2]
     key_dist2, distance2 = list(data_map.items())[len(data_map) // 2]
-    key_dist3, distance3 = list(data_map.items())[len(data_map) // 2 + 1]
+    key_dist3, distance3 = list(data_map.items())[len(data_map) // 2 + 2]
     distancem = (distance1 + distance2 + distance3) / 3
     right_key, right1 = list(data_map.items())[-1]
-    right_key, right2 = list(data_map.items())[-2]
-    right_key, right3 = list(data_map.items())[-3]
+    right_key, right2 = list(data_map.items())[-3]
+    right_key, right3 = list(data_map.items())[-5]
     rightm = (right1 + right2 + right3) / 3
     left_key, left1 = list(data_map.items())[0]
-    left_key, left2 = list(data_map.items())[1]
-    left_key, left3 = list(data_map.items())[2]
+    left_key, left2 = list(data_map.items())[2]
+    left_key, left3 = list(data_map.items())[4]
     leftm = (left1 + left2 + left3) / 3
     print("distance", distancem)
     print("left ", leftm)
     print("right", rightm)
     moyenne = (distancem + leftm + rightm) /3
-    if 420 > moyenne >= 0.0 :
+    if 420 > moyenne >= 0.0 or ((distancem <= 120 or leftm <= 120 or rightm <= 120) and  time.time() - zero_time > 1.5):
         return -1.0
     if (distancem >= 5000):
         return 0.5
@@ -108,29 +110,37 @@ class Car:
 
 def get_angle(data_map):
 
-    """key_dist1, distance1 = list(data_map.items())[len(data_map) // 2 - 1]
+    key_dist1, distance1 = list(data_map.items())[len(data_map) // 2 - 2]
     key_dist2, distance2 = list(data_map.items())[len(data_map) // 2]
-    key_dist3, distance3 = list(data_map.items())[len(data_map) // 2 + 1]
-    distancem = (distance1 + distance2 + distance3) /3
-    if distancem >= 1500:
+    key_dist3, distance3 = list(data_map.items())[len(data_map) // 2 + 2]
+    distancem = (distance1 + distance2 + distance3) / 3
+    right_key, right1 = list(data_map.items())[-1]
+    right_key, right2 = list(data_map.items())[-3]
+    right_key, right3 = list(data_map.items())[-5]
+    rightm = (right1 + right2 + right3) / 3
+    left_key, left1 = list(data_map.items())[0]
+    left_key, left2 = list(data_map.items())[2]
+    left_key, left3 = list(data_map.items())[4]
+    leftm = (left1 + left2 + left3) / 3
+    min_val = min(distancem, rightm, leftm)
+    if min_val >= 1500:
         return 0.0
-    elif distancem >= 1000:
+    elif min_val >= 1000:
         return 0.05
-    elif distancem >= 800:
+    elif min_val >= 800:
         return 0.25
-    elif distancem >= 700:
+    elif min_val >= 700:
         return 0.4
-    elif distancem >= 600:
+    elif min_val >= 600:
         return 0.55
-    elif distancem >= 400:
+    elif min_val >= 400:
         return 0.7
-    elif distancem >= 200:
+    elif min_val >= 200:
         return 0.85
-    elif distancem > 200 and distancem >= 50:
+    elif min_val > 200 and min_val >= 50:
         return 0.9
     else:
         return 1
-"""
 
 def update_angle(data_map, speed):
     key_dist, distance = list(data_map.items())[len(data_map) // 2]
@@ -147,7 +157,7 @@ def update_angle(data_map, speed):
 def do_action(data_map, radioSerial):
     speed = update_speed(data_map)
     if speed == -1:
-        forward = "CAR_BACKWARDS:" + str(0.4) + "\n"
+        forward = "CAR_BACKWARDS:" + str(0.8) + "\n"
     else:
         forward = "CAR_FORWARD:" + str(speed) + "\n"
     angle = "WHEELS_DIR:" + str(update_angle(data_map, speed)) + "\n"
@@ -157,7 +167,6 @@ def do_action(data_map, radioSerial):
     if (time.time() - old_time) > 0.1:
         radioSerial.write(angle.encode())
     #if (time.time() - old_time) > 1:
-    print((radioSerial.read(30)))
 
 
 ##print(send_speed)
@@ -173,7 +182,7 @@ def RefineValue():
         lastDistance = distance
         continue
 
-    print(data.distance_tab)
+    #print(data.distance_tab)
     #print (len(data.distance_tab))
     if len(data.distance_tab) < 32:
         data.distance_tab.clear()
@@ -216,9 +225,9 @@ def LiDARFrameProcessing(frame: Delta2GFrame, radioSerial: serial.Serial):
                 scanSamplesSignalQuality.append(signalQuality)
                 scanSamplesRange.append(distance * RANGE_SCALE)
                 angle = (startAngle) + (i * ((360.0 / SCAN_STEPS) / sampleCnt))
-                if 0 <= angle <= 30:
+                if 0 <= angle <= 50:
                     angle = angle + 360
-                if 330.0 < angle < 390.0:
+                if 310.0 < angle < 410.0:
                     data.angle_distance_tab[angle] = distance * RANGE_SCALE
                     #print("---------Angle: %f" % angle)
                     #print("Distance: %f" % (distance * RANGE_SCALE))
@@ -228,7 +237,6 @@ def LiDARFrameProcessing(frame: Delta2GFrame, radioSerial: serial.Serial):
             if frameIndex == (SCAN_STEPS - 1):
                 data.angle_distance_tab = dict(sorted(data.angle_distance_tab.items()))
                 RefineValue()
-                print(data.angle_distance_tab)
                 #print("datalen : %d" % len(data.distance_tab))
                 do_action(data.angle_distance_tab, radioSerial)
                 if compare_maps(data.angle_distance_tab):
@@ -285,6 +293,7 @@ def manage_controller(radioSerial, ds):
 
 
 def main():
+    controller_is_connected = False
     try:
         radioSerial = serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=0)
     except serial.serialutil.SerialException:
@@ -297,9 +306,12 @@ def main():
     except socket.error as e:
         print(f"ERROR: TCP Connection Error: {e}")
         return
-
-    ds = pydualsense.pydualsense()
-    ds.init()
+    try :
+        ds = pydualsense.pydualsense()
+        ds.init()
+        controller_is_connected = True
+    except:
+        pass
     status = 0
     checksum = 0
     lidarFrame = Delta2GFrame()
@@ -312,9 +324,10 @@ def main():
         except socket.error as e:
             print(f"ERROR: TCP Read Error: {e}")
             break
-        triangle_pressed = ds.state.triangle
-        if triangle_pressed:
-            manage_controller(radioSerial, ds)
+        if controller_is_connected:
+            triangle_pressed = ds.state.triangle
+            if triangle_pressed:
+                manage_controller(radioSerial, ds)
         for by in rx:
             match status:
                 case 0:
