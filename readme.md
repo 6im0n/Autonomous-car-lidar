@@ -12,12 +12,6 @@ The project aimed to teach fundamental AI concepts by developing a basic autonom
 The car only sent LIDAR information of visualized  space, with this the goal is to make the car autonomous, is only software development, at this point.
 This experience inspired us to bring the concept to using a real LIDAR and an RC car, transforming theoretical knowledge into a practical application of robotics ad AI.
 
-## **📑 Project Info**
-- [📦 Epitech private repository]()
-- [📦 Group remote repository]()
-- [📄 PDF Project](https://intra.epitech.eu/module/2024/B-DOP-500/NAN-5-1/acti-648231/project/file/B-DOP-500_bernstein.pdf)
-
-
 ### **📃 Description**
 
 **What is AI?**

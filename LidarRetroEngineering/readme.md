@@ -21,25 +21,26 @@ The retro-engineering of the LIDAR was aided by the following link:
 - **White Wire:** Signal for the LIDAR (connected to the RX of the ESP32)
 - **Purple Wire:** GND for the LIDAR
 
-## Disassembly of the LIDAR
+# Disasembly of the Lidar
 
-![Lidar Head Removed](https://github.com/6im0n/Autonomous-car-lidar/blob/main/Lidar/schema/20240520_211520.jpg)
-*The head removed shows the LIDAR with IR laser and receiver.*
+![alt text](https://github.com/6im0n/Autonomous-car-lidar/blob/main/LidarRetroEngineering/schema/20240520_211520.jpg)
+head removed show the lidar with IR laser and receptor
 
-![Lidar Without Laser Protector](https://github.com/6im0n/Autonomous-car-lidar/blob/main/Lidar/schema/20240520_211525.jpg)
-*Same view with the laser protector removed.*
+![alt text](https://github.com/6im0n/Autonomous-car-lidar/blob/main/LidarRetroEngineering/schema/20240520_211525.jpg)
+Same with the laser protector removed
 
-![Back of the LIDAR](https://github.com/6im0n/Autonomous-car-lidar/blob/main/Lidar/schema/20240520_211356.jpg)
-*Back of the LIDAR showing the ports and communication interfaces.*
+![alt text](https://github.com/6im0n/Autonomous-car-lidar/blob/main/LidarRetroEngineering/schema/20240520_211356.jpg)
+Back of the lidar Show the port and the comminucation used by it
 
-![Mainboard Explanation](https://github.com/6im0n/Autonomous-car-lidar/blob/main/Lidar/schema/20240520_211431.jpg)
-*Explanation of the mainboard and the usage of IR communication between the head and the main board.*
+![alt text](https://github.com/6im0n/Autonomous-car-lidar/blob/main/LidarRetroEngineering/schema/20240520_211431.jpg)
+Explaination of the mainboard and the usage of IR communication betwen head and main board
 
-![Detailed View of the Head](https://github.com/6im0n/Autonomous-car-lidar/blob/main/Lidar/schema/20240520_211852.jpg)
-*Detailed view of the head detached from the rest of the support.*
+![alt text](https://github.com/6im0n/Autonomous-car-lidar/blob/main/LidarRetroEngineering/schema/20240520_211852.jpg)
+detailed view of the head detached of the rest of her support
 
-![Encoder Explanation](https://github.com/6im0n/Autonomous-car-lidar/blob/main/Lidar/schema/20240520_212243.jpg)
-*Explanation of the encoder part and the different-sized objects that represent the reset of the angle, marking the 0-degree angle.*
 
-![Head and Main Support](https://github.com/6im0n/Autonomous-car-lidar/blob/main/Lidar/schema/20240520_212322.jpg)
-*Head of the LIDAR and its main support.*
+![alt text](https://github.com/6im0n/Autonomous-car-lidar/blob/main/LidarRetroEngineering/schema/20240520_212243.jpg)
+Explenation of the encoder part, and the "object" that is différent size represent the reset of the angle, so the 0 angle.
+
+![alt text](https://github.com/6im0n/Autonomous-car-lidar/blob/main/LidarRetroEngineering/schema/20240520_212322.jpg)
+Head of the lidar and the main support of the lidar
