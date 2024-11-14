@@ -5,6 +5,10 @@ example of info send by the API given for the N4S project
 LIDAR INFO: 1:OK:No errors so far:450.0:450.0:475.0:475.0:487.5:500.0:500.0:525.0:550.0:550.0:575.0:575.0:575.0:600.0:600.0:600.0:625.0:625.0:625.0:675.0:675.0:675.0:675.0:700.0:700.0:700.0:750.0:750.0:750.0:800.0:800.0:800.0:No further info
 ```
 
+### Retro-engineering of the lidar
+The retro engineering of the lidar has been help by the following link:
+- https://notblackmagic.com/bitsnpieces/lidar-modules/
+
 ### value distance contain 32 information but no angle
 the angle of total FOV is  60 degrees, first-person viewpoint
 
@@ -17,9 +21,13 @@ The lidar on the other part for same 60 degrees FOV has 57 values, so each value
 
 ### wirering
 RED wirering is the 3.3V (directly connected to the motor)
+
 BLACK wirering is the GND (directly connected to the motor)
+
 ORANGE wirering is the 5V for the lidar
-WHITE wirering is the signal for the lidar
+
+WHITE wirering is the signal for the lidar (connected to the RX of the ESP32)
+
 PURPLE wirering is the GND for the lidar
 
 
