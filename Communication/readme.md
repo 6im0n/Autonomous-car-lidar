@@ -1,72 +1,68 @@
-# 3 solutions:
+# Proposed Solutions to Control the RC Car via Arduino
 
+This document outlines three potential solutions for controlling the RC car using an Arduino, followed by a feasibility analysis for each solution.
 
-## First solution:
+## First Solution: Replace the 2.4GHz Transceiver Chip in the Remote Controller
 
-In the remote controller the chip handle the 2.4GHZ communication receiver is a xn297lbw
-https://www.panchip.com/static/upload/file/20190916/1568621331607821.pdf
-the chip is a 2.4GHz wireless transceiver chip, which is designed for wireless applications.
+### Overview
+In the remote controller, the chip responsible for handling the 2.4GHz communication receiver is the **XN297LBW**. It is a 2.4GHz wireless transceiver chip designed for wireless applications.
+- Datasheet: [XN297LBW Datasheet](https://www.panchip.com/static/upload/file/20190916/1568621331607821.pdf)
 
-this solution concist to replace the role of this chip and make a new transmiter for data
+### Proposed Approach
+This solution consists of replacing the role of the XN297LBW chip and creating a new transmitter to handle data communication.
 
+### Challenges
+- This requires reverse engineering the proprietary protocol between the remote controller and the car.
+- The complexity of replicating the communication protocol makes this solution less practical.
 
-## Second solution:
+## Second Solution: Replace the Receiver in the RC Car
 
-repalce the the receiver in the car, impossible beacause the 2 in one receiver do not permit to access directly to the esc
+### Overview
+The RC car contains a 2-in-1 receiver that also functions as an ESC (Electronic Speed Controller).
 
+### Feasibility
+- Replacing the receiver is not feasible since the ESC functionality is integrated into the receiver.
+- The integrated nature of the receiver and ESC means we cannot directly control the ESC independently.
 
-## Third solution:
+## Third Solution: Replace the Usage of Potentiometer Electronically
 
-to replace the the usage of pentotimeter elelectronicly, technicaly is possible but how ? 
-by replace the current potetiometer by a digital one, and control it by the arduino.
+### Overview
+Technically, it is possible to replace the potentiometer oin the RC command with a digital version and control it via Arduino.
 
-#### current potentionemeter 5kOhm:
-https://www.elektroda.com/rtvforum/topic3377367.html
+#### Details
+- **Current Potentiometer (5kΩ):** [Link to Potentiometer Details](https://www.elektroda.com/rtvforum/topic3377367.html)
+- **Proposed Digital Potentiometer:** **X9C103S**, a 10kΩ digital potentiometer with nonvolatile memory.
+  - It is controlled via an increment/decrement signal rather than an SPI interface, which means we cannot directly jump from one value to another; we need to traverse through all intermediate values.
+  - The time between two values is 1 microsecond.
+  - [Demonstration of Digital Potentiometer](https://www.youtube.com/watch?v=lGk_HVKXYWA)
 
-digital potentiometer:
-X9C103S this is a 10kOhm digital potentiometer and nonvolatile memory to store the state og the current value
-this potentiometer is not controled by a spi interface but by a simple increment and decrement signal.
-so the probleme we can't jump to one value to other value directly, we need to go through all the value betwen the current value and the target value.
-(the time betwen two value is 1 micro-second)
-https://www.youtube.com/watch?v=lGk_HVKXYWA
-kl
-#### how to control a digital potentiometer from a arduino:
-- https://www.youtube.com/watch?v=zQ5_NPeBfHM
-- https://www.hackster.io/umpheki/arduino-and-mcp4131-digitally-controlled-potentiometer-dcp-d35997
+#### How to Control a Digital Potentiometer with Arduino
+- [Arduino and MCP4131 Digital Potentiometer Tutorial](https://www.youtube.com/watch?v=zQ5_NPeBfHM)
+- [Arduino and Digital Potentiometer Project](https://www.hackster.io/umpheki/arduino-and-mcp4131-digitally-controlled-potentiometer-dcp-d35997)
 
+## Final Step of Solution Selection
+Initially, the first solution seemed most promising, but after extensive research, it proved impractical due to the complexity of reversing the communication protocol.
 
-## Final step of the selection of the solution:
+### Links Used During Research
+- [Discussion on Reverse Engineering Drone Protocol](https://mmelchior.wordpress.com/2016/06/06/qc-360-a1-p1/)
+- [XN297L as Transmitter and NRF24L01 as RX](https://deviationtx.com/forum/protocol-development/9024-question-xn297l-as-transmitter-and-nrf24l01-as-rx)
 
-at the begining of reasherch the first solution seams to be the best but after lot of reascherch this solution is a nightmare.
-because we need to reverse completly the protocol used betwen the controller and the RC car. 
+## Technical Considerations
+### SPI Interface
+- [Serial Peripheral Interface (SPI) Overview](https://en.wikipedia.org/wiki/Serial_Peripheral_Interface)
 
-link used for this reascherch:
-- talk about the protocol used by a small drone and reverse it to be used with and arduino
-https://mmelchior.wordpress.com/2016/06/06/qc-360-a1-p1/
-- 
-https://deviationtx.com/forum/protocol-development/9024-question-xn297l-as-transmitter-and-nrf24l01-as-rx
-[...] link to be added soon
+### System Architecture with Two Digital Potentiometers
 
-
-## SPI interface
-https://en.wikipedia.org/wiki/Serial_Peripheral_Interface
-
-## two didigital potentiometer
-
-
-
-## The protocol
-
+#### Protocol Diagram
+```
 +--------------------+    Nrf24 signal for lidar data (1) +--------------------+
 |        CAR         | ---------------------------------->|    Arduino PC      |
 +--------------------+                                    +--------------------+
 ^                                                                    |
 |                                                                    |
-|      RF signal of the remote controller controlled by arduino (2)  |
+|      RF signal of the remote controller controlled by Arduino (2)  |
 +--------------------------------------------------------------------+
+```
 
-
-(1) is the signal betwen the two arduino the first one on the car is the transmittter of the lidar data.
-(2) is the signal betwen the remote controller and the arduino, the arduino is the transmitter of the signal to the car.
-
-(2) when need component to replace the role of potentiometer
+- **(1)** Signal between two Arduinos: The first Arduino on the car transmits the lidar data.
+- **(2)** Signal between the remote controller and the Arduino: The Arduino transmits the signal to the car, replacing the role of the potentiometer.
