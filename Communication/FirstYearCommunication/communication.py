@@ -11,7 +11,7 @@ c_process = subprocess.Popen(
 
 # Start the Python program
 python_process = subprocess.Popen(
-    ['python3', 'Lidar/LidarReader.py'],
+    ['python3', 'LidarRetroEngineering/LidarReader.py'],
     stdin=subprocess.PIPE,
     stdout=subprocess.PIPE,
     text=True
@@ -83,7 +83,7 @@ c_process = subprocess.Popen(
 
 # Start the Python program
 python_process = subprocess.Popen(
-    ['python3', 'Lidar/LidarReader.py'],
+    ['python3', 'LidarRetroEngineering/LidarReader.py'],
     stdin=subprocess.PIPE,
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
