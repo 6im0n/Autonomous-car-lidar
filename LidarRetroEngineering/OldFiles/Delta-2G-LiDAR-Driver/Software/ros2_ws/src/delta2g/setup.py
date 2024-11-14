@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='NotBlackMagic',
     maintainer_email='social@notblackmagic.com',
-    description='Simple LidarScan publisher for Delta-2G Lidar',
+    description='Simple LidarScan publisher for Delta-2G LidarRetroEngineering',
     license='Apache License 2.0',
     tests_require=['pytest'],
     entry_points={
