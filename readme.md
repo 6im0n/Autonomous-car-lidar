@@ -1,7 +1,7 @@
 # 🩻 Autonomous Car - Powered by Lidar
 
 <p align="center">
-<img width="800" height="400" src="https://files.oaiusercontent.com/file-1vLkaLw6y3UKh2UOGxW8Ti1C?se=2024-11-14T22%3A46%3A02Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D604800%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3Dfa25c9f8-d276-4992-9d15-068a5ab4865e.webp&sig=yOZ9C1%2BdliBenadFkxPorIRrDcTzNncwmcNPYLUCLEE%3D">
+<img width="800" height="450" src="https://github.com/user-attachments/assets/e5d4cd7f-94c9-4daa-84b8-d2383e512d9f">
 </p>
 
 > *This image is pure fictional and is not the final product of the project*
