@@ -67,6 +67,28 @@ graph TD
 
 ## **🎮 How to Use:**
 
+1. Connect the lidar to the battery
+2. Go to your pc and connect the network created by the ESP32  (CAR_WIFI)
+3. Start the car (button under the car) + battery connected and charged
+4. Connect the controller (PS5 / PS4) to the computer
+3. Connect the remote controller (of the car) to the computer
+4. wait 5sec
+5. run ```sudo chmod 777 /dev/ttyACM0``` ACM0 port can be also ACM1 or ACM2, etc...
+6. run the python script ```python3 CarAI.py```
+
+```bash
+python3 CarAI.py
+```
+> Note: You may need to install rules into you linux for the controller
+
+you can use the following command to install the rules:
+```bash
+sudo cp 70-ps5-controller.rules /etc/udev/rules.d/
+```
+
+if you use the controller with the computer, you can use the following command to install the required library:
+```bash
+
 ### **🚗 If you use the RC car:**
 - **Step 1:** Connect the modified RC controller arduino to the computer.
 - **Step 2:** Check the red light on the remote controller to ensure it is connected. if it's blinking, that means arduino has not sent the initialisation process. so way the LED to stop blinking. (approximately 5 seconds)

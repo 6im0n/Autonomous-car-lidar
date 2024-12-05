@@ -97,7 +97,7 @@ def update_speed(data_map):
     print("left ", leftm)
     print("right", rightm)
     moyenne = (distancem + leftm + rightm) /3
-    if 420 > moyenne >= 0.0 or ((distancem <= 120 or leftm <= 120 or rightm <= 120) and  time.time() - zero_time > 1.5):
+    if 420 > moyenne >= 0.0 or ((distancem <= 220 or leftm <= 220 or rightm <= 220) and  time.time() - zero_time > 1):
         return -1.0
     if (distancem >= 5000):
         return 0.5
@@ -313,6 +313,7 @@ def manage_controller(radioSerial, ds):
         circle_pressed = ds.state.circle  # État du bouton Cercle
         square_pressed = ds.state.square  # État du bouton Carré
         triangle_pressed = ds.state.triangle  # État du bouton Triangle
+        ds.light.setColorI(255, 0, 0)  # set touchpad color to red
 
         if cross_pressed:
             break
@@ -371,6 +372,7 @@ def main():
             triangle_pressed = ds.state.triangle
             if triangle_pressed:
                 manage_controller(radioSerial, ds)
+            ds.light.setColorI(0, 255, 0)  # set touchpad color to green
         for by in rx:
             match status:
                 case 0:
