@@ -67,14 +67,14 @@ graph TD
 
 ## **🎮 How to Use:**
 
-1. Connect the lidar to the battery
+1. Connect the lidar to the powerbank (check if batery is ready and charge, car battery and powebank
 2. Go to your pc and connect the network created by the ESP32  (CAR_WIFI)
 3. Start the car (button under the car) + battery connected and charged
 4. Connect the controller (PS5 / PS4) to the computer
-3. Connect the remote controller (of the car) to the computer
-4. wait 5sec
-5. run ```sudo chmod 777 /dev/ttyACM0``` ACM0 port can be also ACM1 or ACM2, etc...
-6. run the python script ```python3 CarAI.py```
+3. Connect the remote controller (of the car) to the computer via the blue USB
+5. wait 5sec
+6. run ```sudo chmod 777 /dev/ttyACM0``` ACM0 port can be also ACM1 or ACM2, etc...
+7. run the python script ```python3 CarAI.py```
 
 ```bash
 python3 CarAI.py
