@@ -29,8 +29,8 @@ An autonomous car is a vehicle that can navigate and operate without human inter
 The application utilizes the following technologies:
 
 - **Hardware:**
-    - **LIDAR:** A LIDAR sensor is used to measure distances and generate 3D maps of the environment.
-    - **RC Car:** A remote-controlled car is used as the physical platform for the autonomous system.
+    - **LIDAR:** A LIDAR sensor is used to measure distances and generate 3D maps of the environment. [Using for the project](https://fr.aliexpress.com/item/1005006202417141.html)
+    - **RC Car:** A remote-controlled car is used as the physical platform for the autonomous system. (recomand a buggy, lidar is more easy to mount)
     - **Arduino:** An Arduino microcontroller is used to communicate with a computer and control the RC car via the modified remote controller.
     - **ESP32:** An ESP32 microcontroller is used to communicate with the LIDAR sensor and send data to the computer via WIFI.
     - **computer:** A computer is used to process data from the LIDAR sensor and control the RC car.
